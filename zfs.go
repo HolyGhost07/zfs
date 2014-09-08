@@ -4,12 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/op/go-logging"
 	"github.com/theairkit/runcmd"
-)
-
-var (
-	log = logging.MustGetLogger("zbackup")
 )
 
 const (
