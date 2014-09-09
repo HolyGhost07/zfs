@@ -53,6 +53,14 @@ func (z *Zfs) ExistFs(fs, fsType string) (bool, error) {
 	return true, nil
 }
 
+func ExistSnap(remote, snapshot string) (bool, error) {
+	return std.ExistFs(remote+"@"+snapshot, SNAP)
+}
+
+func (z *Zfs) ExistSnap(remote, snapshot string) (bool, error) {
+	return z.ExistFs(remote, snapshot)
+}
+
 func ListFs(fsName, fsType string, recursive bool) ([]string, error) {
 	return std.ListFs(fsName, fsType, recursive)
 }
