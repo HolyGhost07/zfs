@@ -37,6 +37,7 @@ func (this *Zfs) CreateSnapshot(fs, snapName string) error {
 func DestroyFs(fs string) error {
 	return std.DestroyFs(fs)
 }
+
 func (this *Zfs) DestroyFs(fs string) error {
 	cmd := this.Command("zfs destroy -r " + fs)
 	_, err := cmd.Run()
