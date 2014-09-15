@@ -74,30 +74,28 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 	fsList := make([]string, 0)
 	cmd := "zfs list -H -o name -t " + fsType
 
-	if recursive && fsName != "" {
-		out, err := this.Command(cmd + " -r " + fsName).Run()
+	if strings.HasSuffix(fsName, "*") {
+		out, err := this.Command(cmd).Run()
 		if err != nil {
 			return nil, err
 		}
 		for _, fs := range out {
-			fsList = append(fsList, fs)
+			if strings.HasPrefix(fs, strings.Trim(fsName, "*")) {
+				fsList = append(fsList, fs)
+			}
 		}
 		return fsList, nil
 	}
 
-	out, err := this.Command(cmd).Run()
+	if recursive {
+		cmd = cmd + " -r"
+	}
+	out, err := this.Command(cmd + " " + fsName).Run()
 	if err != nil {
 		return nil, err
 	}
 	for _, fs := range out {
-		switch {
-		case strings.HasSuffix(fsName, "*") && strings.HasPrefix(fs, strings.Trim(fsName, "*")):
-			fsList = append(fsList, fs)
-		case fs == fsName:
-			fsList = append(fsList, fs)
-		case fsName == "":
-			fsList = append(fsList, fs)
-		}
+		fsList = append(fsList, fs)
 	}
 	return fsList, nil
 }
