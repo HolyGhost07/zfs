@@ -49,7 +49,7 @@ func ExistFs(fs, fsType string) (bool, error) {
 }
 
 func (z *Zfs) ExistFs(fs, fsType string) (bool, error) {
-	if _, err := z.ListFs(fs, fsType, false); err != nil {
+	if _, err := z.ListFs(fs, fsType, "", false); err != nil {
 		if strings.Contains(err.Error(), "dataset does not exist") {
 			return false, nil
 		}
@@ -66,18 +66,22 @@ func (z *Zfs) ExistSnap(remote, snapshot string) (bool, error) {
 	return z.ExistFs(remote+"@"+snapshot, SNAP)
 }
 
-func ListFs(fsName, fsType string, recursive bool) ([]string, error) {
-	return std.ListFs(fsName, fsType, recursive)
+func ListFs(fsName, fsType, property string, recursive bool) ([]string, error) {
+	return std.ListFs(fsName, fsType, property, recursive)
 }
 
-func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error) {
+func (this *Zfs) ListFs(fsName, fsType, property string, recursive bool) ([]string, error) {
 	fsList := make([]string, 0)
 	r := ""
 	if recursive {
 		r = "-r "
 	}
 	if strings.Contains(fsName, "*") {
-		allFs, err := this.Command("zfs list -H -t " + fsType + " -o name -r").Run()
+		cmd := "zfs list -H -t " + fsType + " -o name -r"
+		if property != "" {
+			cmd = "zfs get -H -s local " + property + " -t " + fsType + " -o name -r"
+		}
+		allFs, err := this.Command(cmd).Run()
 		if err != nil {
 			return fsList, err
 		}
@@ -88,7 +92,11 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 		}
 		return fsList, err
 	}
-	return this.Command("zfs list -H -t " + fsType + " -o name " + r + fsName).Run()
+	cmd := "zfs list -H -t " + fsType + " -o name " + r + fsName
+	if property != "" {
+		cmd = "zfs get -H -s local " + property + " -t " + fsType + " -o name " + r + fsName
+	}
+	return this.Command(cmd).Run()
 }
 
 func RenameFs(oldName, newName string) error {
