@@ -72,31 +72,37 @@ func ListFs(fsName, fsType, property string, recursive bool) ([]string, error) {
 
 func (this *Zfs) ListFs(fsName, fsType, property string, recursive bool) ([]string, error) {
 	fsList := make([]string, 0)
-	r := ""
-	if recursive {
-		r = "-r "
-	}
-	if strings.Contains(fsName, "*") {
-		cmd := "zfs list -H -t " + fsType + " -o name -r"
-		if property != "" {
-			cmd = "zfs get -H -s local " + property + " -t " + fsType + " -o name -r"
-		}
-		allFs, err := this.Command(cmd).Run()
-		if err != nil {
-			return fsList, err
-		}
-		for _, fs := range allFs {
-			if strings.Contains(fs, strings.Trim(fsName, "*")) {
-				fsList = append(fsList, fs)
-			}
-		}
-		return fsList, err
-	}
-	cmd := "zfs list -H -t " + fsType + " -o name " + r + fsName
+	cmd := "zfs list -H -o name -t " + fsType
 	if property != "" {
-		cmd = "zfs get -H -s local " + property + " -t " + fsType + " -o name " + r + fsName
+		cmd = cmd + " -s local " + property
 	}
-	return this.Command(cmd).Run()
+
+	if recursive && fsName != "" {
+		out, err := this.Command(cmd + " -r " + fsName).Run()
+		if err != nil {
+			return nil, err
+		}
+		for _, fs := range out {
+			fsList = append(fsList, fs)
+		}
+		return fsList, nil
+	}
+
+	out, err := this.Command(cmd).Run()
+	if err != nil {
+		return nil, err
+	}
+	for _, fs := range out {
+		switch {
+		case strings.HasSuffix(fsName, "*") && strings.HasPrefix(fs, strings.Trim(fsName, "*")):
+			fsList = append(fsList, fs)
+		case fs == fsName:
+			fsList = append(fsList, fs)
+		case fsName == "":
+			fsList = append(fsList, fs)
+		}
+	}
+	return fsList, nil
 }
 
 func RenameFs(oldName, newName string) error {
