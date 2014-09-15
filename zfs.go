@@ -128,11 +128,15 @@ func SendSnapshot(fs, snapCurr, snapNew string, cw runcmd.CmdWorker) error {
 	return std.SendSnapshot(fs, snapCurr, snapNew, cw)
 }
 func (this *Zfs) SendSnapshot(fs, snapCurr, snapNew string, cw runcmd.CmdWorker) error {
-	cmd := this.Command(sendCmd(fs, snapCurr, snapNew))
-	if err := cmd.Start(); err != nil {
+	cmd := "zfs send -i " + fs + "@" + snapCurr + " " + fs + "@" + snapNew
+	if snapNew == "" {
+		cmd = "zfs send " + fs + "@" + snapCurr
+	}
+	sendCmd := this.Command(cmd)
+	if err := sendCmd.Start(); err != nil {
 		return err
 	}
-	_, err := io.Copy(cw.Stdin(), cmd.Stdout())
+	_, err := io.Copy(cw.Stdin(), sendCmd.Stdout())
 	return err
 }
 
@@ -146,11 +150,4 @@ func (this *Zfs) RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
 		return nil, err
 	}
 	return cmd, nil
-}
-
-func sendCmd(fs, snapCurr, snapNew string) string {
-	if snapNew == "" {
-		return "zfs send " + fs + "@" + snapCurr
-	}
-	return "zfs send -i " + fs + "@" + snapCurr + " " + fs + "@" + snapNew
 }
