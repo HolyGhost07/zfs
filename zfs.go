@@ -16,13 +16,13 @@ type Zfs struct {
 	runcmd.Runner
 }
 
-var std = NewZfs(runcmd.NewLocalRunner())
+var std, _1 = NewZfs(runcmd.NewLocalRunner())
 
-func NewZfs(r runcmd.Runner, e error) *Zfs {
-	if e != nil {
-		return nil
+func NewZfs(r runcmd.Runner, err error) (*Zfs, error) {
+	if err != nil {
+		return nil, err
 	}
-	return &Zfs{r}
+	return &Zfs{r}, nil
 }
 
 func CreateSnapshot(fs, snapName string) error {
@@ -100,11 +100,11 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 	return fsList, nil
 }
 
-func ListByProperty(property string) ([]string, error) {
-	return std.ListByProperty(property)
+func ListFsByProperty(property string) ([]string, error) {
+	return std.ListFsByProperty(property)
 }
 
-func (this *Zfs) ListByProperty(property string) ([]string, error) {
+func (this *Zfs) ListFsByProperty(property string) ([]string, error) {
 	fsList := make([]string, 0)
 	out, err := this.Command("zfs get -H -o name -s local " + property).Run()
 	if err != nil {
