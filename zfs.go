@@ -16,7 +16,7 @@ type Zfs struct {
 	runcmd.Runner
 }
 
-var std, _1 = NewZfs(runcmd.NewLocalRunner())
+var std, _ = NewZfs(runcmd.NewLocalRunner())
 
 func NewZfs(r runcmd.Runner, err error) (*Zfs, error) {
 	if err != nil {
@@ -86,10 +86,13 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 		}
 		return fsList, nil
 	}
-
-	if recursive {
+	switch {
+	case recursive:
 		cmd = cmd + " -r"
+	case fsType == SNAP:
+		cmd = cmd + " -d1"
 	}
+
 	out, err := this.Command(cmd + " " + fsName).Run()
 	if err != nil {
 		return nil, err
