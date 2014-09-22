@@ -1,6 +1,7 @@
 package zfs
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -30,7 +31,12 @@ func CreateSnapshot(fs, snapName string) error {
 }
 
 func (this *Zfs) CreateSnapshot(fs, snapName string) error {
-	_, err := this.Command("zfs snapshot " + fs + "@" + snapName).Run()
+	fmt.Println("zfs snapshot " + fs + "@" + snapName)
+	c, err := this.Command("zfs snapshot " + fs + "@" + snapName)
+	if err != nil {
+		return err
+	}
+	_, err = c.Run()
 	return err
 }
 
@@ -39,8 +45,12 @@ func DestroyFs(fs string) error {
 }
 
 func (this *Zfs) DestroyFs(fs string) error {
-	cmd := this.Command("zfs destroy -r " + fs)
-	_, err := cmd.Run()
+	fmt.Println("zfs destroy -r " + fs)
+	c, err := this.Command("zfs destroy -r " + fs)
+	if err != nil {
+		return err
+	}
+	_, err = c.Run()
 	return err
 }
 
@@ -74,8 +84,14 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 	fsList := make([]string, 0)
 	cmd := "zfs list -H -o name -t " + fsType
 
+	fmt.Println("zfs list -H -o name -t " + fsType)
+
 	if strings.HasSuffix(fsName, "*") {
-		out, err := this.Command(cmd).Run()
+		c, err := this.Command(cmd)
+		if err != nil {
+			return nil, err
+		}
+		out, err := c.Run()
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +109,12 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 		cmd = cmd + " -d1"
 	}
 
-	out, err := this.Command(cmd + " " + fsName).Run()
+	fmt.Println(cmd + " " + fsName)
+	c, err := this.Command(cmd + " " + fsName)
+	if err != nil {
+		return nil, err
+	}
+	out, err := c.Run()
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +130,12 @@ func ListFsByProperty(property string) ([]string, error) {
 
 func (this *Zfs) ListFsByProperty(property string) ([]string, error) {
 	fsList := make([]string, 0)
-	out, err := this.Command("zfs get -H -o name -s local " + property).Run()
+	fmt.Println("zfs get -H -o name -s local " + property)
+	c, err := this.Command("zfs get -H -o name -s local " + property)
+	if err != nil {
+		return nil, err
+	}
+	out, err := c.Run()
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +149,12 @@ func RenameFs(oldName, newName string) error {
 	return std.RenameFs(oldName, newName)
 }
 func (this *Zfs) RenameFs(oldName, newName string) error {
-	_, err := this.Command("zfs rename " + oldName + " " + newName).Run()
+	fmt.Println("zfs rename " + oldName + " " + newName)
+	c, err := this.Command("zfs rename " + oldName + " " + newName)
+	if err != nil {
+		return err
+	}
+	_, err = c.Run()
 	return err
 }
 
@@ -135,11 +166,15 @@ func (this *Zfs) SendSnapshot(fs, snapCurr, snapNew string, cw runcmd.CmdWorker)
 	if snapNew == "" {
 		cmd = "zfs send " + fs + "@" + snapCurr
 	}
-	sendCmd := this.Command(cmd)
+	fmt.Println(cmd)
+	sendCmd, err := this.Command(cmd)
+	if err != nil {
+		return err
+	}
 	if err := sendCmd.Start(); err != nil {
 		return err
 	}
-	_, err := io.Copy(cw.Stdin(), sendCmd.Stdout())
+	_, err = io.Copy(cw.StdinPipe(), sendCmd.StdoutPipe())
 	return err
 }
 
@@ -148,9 +183,11 @@ func RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
 }
 
 func (this *Zfs) RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
-	cmd := this.Command("zfs recv -F " + fs + "@" + snap)
-	if err := cmd.Start(); err != nil {
+	c, err := this.Command("zfs recv -F " + fs + "@" + snap)
+	if err != nil {
 		return nil, err
 	}
-	return cmd, nil
+	fmt.Println(c)
+	err = c.Start()
+	return c, nil
 }
