@@ -1,7 +1,6 @@
 package zfs
 
 import (
-	"fmt"
 	"io"
 	"strings"
 
@@ -31,7 +30,6 @@ func CreateSnapshot(fs, snapName string) error {
 }
 
 func (this *Zfs) CreateSnapshot(fs, snapName string) error {
-	fmt.Println("zfs snapshot " + fs + "@" + snapName)
 	c, err := this.Command("zfs snapshot " + fs + "@" + snapName)
 	if err != nil {
 		return err
@@ -45,7 +43,6 @@ func DestroyFs(fs string) error {
 }
 
 func (this *Zfs) DestroyFs(fs string) error {
-	fmt.Println("zfs destroy -r " + fs)
 	c, err := this.Command("zfs destroy -r " + fs)
 	if err != nil {
 		return err
@@ -83,9 +80,6 @@ func ListFs(fsName, fsType string, recursive bool) ([]string, error) {
 func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error) {
 	fsList := make([]string, 0)
 	cmd := "zfs list -H -o name -t " + fsType
-
-	fmt.Println("zfs list -H -o name -t " + fsType)
-
 	if strings.HasSuffix(fsName, "*") {
 		c, err := this.Command(cmd)
 		if err != nil {
@@ -108,8 +102,6 @@ func (this *Zfs) ListFs(fsName, fsType string, recursive bool) ([]string, error)
 	case fsType == SNAP:
 		cmd = cmd + " -d1"
 	}
-
-	fmt.Println(cmd + " " + fsName)
 	c, err := this.Command(cmd + " " + fsName)
 	if err != nil {
 		return nil, err
@@ -130,7 +122,6 @@ func ListFsByProperty(property string) ([]string, error) {
 
 func (this *Zfs) ListFsByProperty(property string) ([]string, error) {
 	fsList := make([]string, 0)
-	fmt.Println("zfs get -H -o name -s local " + property)
 	c, err := this.Command("zfs get -H -o name -s local " + property)
 	if err != nil {
 		return nil, err
@@ -149,7 +140,6 @@ func RenameFs(oldName, newName string) error {
 	return std.RenameFs(oldName, newName)
 }
 func (this *Zfs) RenameFs(oldName, newName string) error {
-	fmt.Println("zfs rename " + oldName + " " + newName)
 	c, err := this.Command("zfs rename " + oldName + " " + newName)
 	if err != nil {
 		return err
@@ -166,7 +156,6 @@ func (this *Zfs) SendSnapshot(fs, snapCurr, snapNew string, cw runcmd.CmdWorker)
 	if snapNew == "" {
 		cmd = "zfs send " + fs + "@" + snapCurr
 	}
-	fmt.Println(cmd)
 	sendCmd, err := this.Command(cmd)
 	if err != nil {
 		return err
@@ -187,7 +176,6 @@ func (this *Zfs) RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(c)
 	err = c.Start()
 	return c, nil
 }
