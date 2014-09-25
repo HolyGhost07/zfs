@@ -222,3 +222,30 @@ func (this *Zfs) Property(property, fs string) (string, error) {
 	}
 	return out[0], nil
 }
+
+func RecentSnapshot(fs string) (string, error) {
+	return std.RecentSnapshot(fs)
+}
+
+func (this *Zfs) RecentSnapshot(fs string) (string, error) {
+	recent := ""
+	c, err := this.Command("zfs list -Hrt snapshot -o name -S creation " + fs)
+	if err != nil {
+		return "", err
+	}
+	snapList, err := c.Run()
+	if err != nil {
+		return "", err
+	}
+	for i := 0; i < len(snapList); i++ {
+		prop, err := this.Property("zbackup:", snapList[i])
+		if err != nil {
+			return "", nil
+		}
+		if prop == "true" {
+			recent = snapList[i]
+			break
+		}
+	}
+	return recent, nil
+}
