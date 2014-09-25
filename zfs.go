@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	FS   = "filesystem"
-	SNAP = "snapshot"
+	FS         = "filesystem"
+	SNAP       = "snapshot"
+	errStrange = "something goes wrong: no errors, but "
 )
 
 type Zfs struct {
@@ -173,7 +174,6 @@ func RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
 }
 
 func (this *Zfs) RecvSnapshot(fs, snap string) (runcmd.CmdWorker, error) {
-	//c, err := this.Command("zfs recv -F " + fs + "@" + snap)
 	c, err := this.Command("zfs recv " + fs + "@" + snap)
 	if err != nil {
 		return nil, err
@@ -191,25 +191,24 @@ func (this *Zfs) SetProperty(property, value, fs string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Run()
-	if err != nil {
+	if _, err = c.Run(); err != nil {
 		return err
 	}
-	out, err := this.GetProperty(property, fs)
+	out, err := this.Property(property, fs)
 	if err != nil {
 		return err
 	}
 	if out != value {
-		return errors.New("something goes wrong: no errors, but cannot set property: " + property)
+		return errors.New(errStrange + "cannot set property: " + property)
 	}
 	return nil
 }
 
-func GetProperty(property, fs string) (string, error) {
-	return std.GetProperty(property, fs)
+func Property(property, fs string) (string, error) {
+	return std.Property(property, fs)
 }
 
-func (this *Zfs) GetProperty(property, fs string) (string, error) {
+func (this *Zfs) Property(property, fs string) (string, error) {
 	c, err := this.Command("zfs get -H -o value " + property + " " + fs)
 	if err != nil {
 		return "", err
@@ -219,7 +218,7 @@ func (this *Zfs) GetProperty(property, fs string) (string, error) {
 		return "", err
 	}
 	if len(out) > 1 {
-		return "", errors.New("something goes wrong; no errors, but property is multivalue: " + strings.Join(out, "\n"))
+		return "", errors.New(errStrange + "property is multivalue: " + strings.Join(out, "\n"))
 	}
 	return out[0], nil
 }
