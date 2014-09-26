@@ -12,7 +12,7 @@ const (
 	FS         = "filesystem"
 	SNAP       = "snapshot"
 	PROPERTY   = "zbackup:"
-	errStrange = "something goes wrong: no errors, but "
+	errStrange = "something goes wrong: no errors, but"
 )
 
 type Zfs struct {
@@ -200,7 +200,7 @@ func (this *Zfs) SetProperty(property, value, fs string) error {
 		return err
 	}
 	if out != value {
-		return errors.New(errStrange + "cannot set property: " + property)
+		return errors.New(errStrange + " cannot set property: " + property)
 	}
 	return nil
 }
@@ -219,7 +219,7 @@ func (this *Zfs) Property(property, fs string) (string, error) {
 		return "", err
 	}
 	if len(out) > 1 {
-		return "", errors.New(errStrange + "property is multivalue: " + strings.Join(out, "\n"))
+		return "", errors.New(errStrange + " property is multivalue: " + strings.Join(out, "\n"))
 	}
 	return out[0], nil
 }
@@ -238,6 +238,9 @@ func (this *Zfs) RecentSnapshot(fs string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// Iterate through snapshots, sorted by creation date;
+	// first match with PROPERTY - recent snapshot
 	for i := 0; i < len(snapList); i++ {
 		prop, err := this.Property(PROPERTY, snapList[i])
 		if err != nil {
