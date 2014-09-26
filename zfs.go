@@ -11,6 +11,7 @@ import (
 const (
 	FS         = "filesystem"
 	SNAP       = "snapshot"
+	PROPERTY   = "zbackup:"
 	errStrange = "something goes wrong: no errors, but "
 )
 
@@ -238,7 +239,7 @@ func (this *Zfs) RecentSnapshot(fs string) (string, error) {
 		return "", err
 	}
 	for i := 0; i < len(snapList); i++ {
-		prop, err := this.Property("zbackup:", snapList[i])
+		prop, err := this.Property(PROPERTY, snapList[i])
 		if err != nil {
 			return "", nil
 		}
