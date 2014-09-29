@@ -126,13 +126,17 @@ func (this *Zfs) RecentSnap(fs, property string) (string, error) {
 		return "", err
 	}
 	for _, snap := range out {
-		val, err := this.Property(snap, property)
-		if err != nil {
-			return "", nil
+		if property != "" {
+			val, err := this.Property(snap, property)
+			if err != nil {
+				return "", nil
+			}
+			if val == "true" {
+				return snap, nil
+			}
+			continue
 		}
-		if val == "true" {
-			return snap, nil
-		}
+		return snap, nil
 	}
 	return "", nil
 }
