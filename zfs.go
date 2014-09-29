@@ -127,11 +127,11 @@ func (this *Zfs) RecentSnap(fs, property string) (string, error) {
 	}
 	for _, snap := range out {
 		if property != "" {
-			val, err := this.Property(snap, property)
+			out, err := this.Property(snap, property)
 			if err != nil {
 				return "", nil
 			}
-			if val == "true" {
+			if out == "true" {
 				return snap, nil
 			}
 			continue
@@ -198,11 +198,11 @@ func (this *Zfs) SetProperty(fs, property, value string) error {
 	if _, err = c.Run(); err != nil {
 		return err
 	}
-	val, err := this.Property(fs, property)
+	out, err := this.Property(fs, property)
 	if err != nil {
 		return err
 	}
-	if val != value {
+	if out != value {
 		return errors.New("cannot set property: " + property)
 	}
 	return nil
