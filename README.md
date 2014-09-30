@@ -1,10 +1,35 @@
-zfs golang package helps you run zfs commands such as:
-- create/destroy snapshots
-- list and check exists fs
-- send/receive snapshots between hosts
+### zfs
 
-use it together with runcmd: https://github.com/theairkit/runcmd
+zfs golang package helps you manage zfs filesystems/snaphots on local/remote hosts
 
-**Examples and usage see zfs_test.go**
+this package wraps runcmd package; i create it essentially for my zbackup program 
+(https://github.com/theairkit/zbackup)
 
-http://godoc.org/github.com/theairkit/zfs
+so, I'll be glad if you find this package useful,
+
+but I think, that much better if you will use runcmd
+
+all types and methods are self-explained:
+http://godoc.org/github.com/theairkit/runcmd
+
+Installation:
+```bash
+go get github.com/theairkit/zfs
+```
+
+### Description and examples
+
+First, create Zfs runner: this is a type, that holds runcmd.Runner,
+and use him for manage zfs filsystems/snapshots
+
+```go
+//TODO
+```
+
+Useful code snippet: send zfs snapshot from local to remote host:
+
+```
+//TODO
+```
+
+zfs_test.go - WIP
