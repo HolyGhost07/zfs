@@ -13,7 +13,7 @@ https://github.com/theairkit/runcmd
 
 all types and methods are self-explained:
 
-http://godoc.org/github.com/theairkit/runcmd
+http://godoc.org/github.com/theairkit/zfs
 
 Installation:
 ```bash
