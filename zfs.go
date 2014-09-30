@@ -8,9 +8,7 @@ import (
 	"github.com/theairkit/runcmd"
 )
 
-var (
-	DATANOE = "dataset does not exist"
-)
+var DATANOE = "dataset does not exist"
 
 type Zfs struct {
 	runcmd.Runner
@@ -25,12 +23,12 @@ func NewZfs(r runcmd.Runner, err error) (*Zfs, error) {
 	return &Zfs{r}, nil
 }
 
-func CreateFs(fs string) error {
-	return std.CreateFs(fs)
+func CreateSnap(fs, snap string) error {
+	return std.CreateSnap(fs, snap)
 }
 
-func (this *Zfs) CreateFs(fs string) error {
-	c, err := this.Command("zfs create " + fs)
+func (this *Zfs) CreateSnap(fs, snap string) error {
+	c, err := this.Command("zfs snapshot " + fs + "@" + snap)
 	if err != nil {
 		return err
 	}
@@ -38,19 +36,11 @@ func (this *Zfs) CreateFs(fs string) error {
 	return err
 }
 
-func CreateSnap(fs, snap string) error {
-	return std.CreateSnap(fs, snap)
+func Destroy(fs string) error {
+	return std.Destroy(fs)
 }
 
-func (this *Zfs) CreateSnap(fs, snap string) error {
-	return this.CreateFs(fs + "@" + snap)
-}
-
-func DestroyFs(fs string) error {
-	return std.DestroyFs(fs)
-}
-
-func (this *Zfs) DestroyFs(fs string) error {
+func (this *Zfs) Destroy(fs string) error {
 	c, err := this.Command("zfs destroy " + fs)
 	if err != nil {
 		return err
@@ -59,33 +49,19 @@ func (this *Zfs) DestroyFs(fs string) error {
 	return err
 }
 
-func DestroySnap(fs, snap string) error {
-	return std.DestroySnap(fs, snap)
+func RenameSnap(fs, snapOld, snapNew string) error {
+	return std.RenameSnap(fs, snapOld, snapNew)
 }
 
-func (this *Zfs) DestroySnap(fs, snap string) error {
-	return this.DestroyFs(fs + "@" + snap)
-}
-
-func RenameFs(fsOld, fsNew string) error {
-	return std.RenameFs(fsOld, fsNew)
-}
-
-func (this *Zfs) RenameFs(fsOld, fsNew string) error {
-	c, err := this.Command("zfs rename " + fsOld + " " + fsNew)
+func (this *Zfs) RenameSnap(fs, snapOld, snapNew string) error {
+	c, err := this.Command(
+		"zfs rename " + fs + "@" + snapOld + " " + fs + "@" + snapNew,
+	)
 	if err != nil {
 		return err
 	}
 	_, err = c.Run()
 	return err
-}
-
-func RenameSnap(snapOld, snapNew string) error {
-	return std.RenameSnap(snapOld, snapNew)
-}
-
-func (this *Zfs) RenameSnap(snapOld, snapNew string) error {
-	return this.RenameFs(snapOld, snapNew)
 }
 
 func ExistFs(fs string) (bool, error) {
@@ -102,12 +78,12 @@ func (this *Zfs) ExistFs(fs string) (bool, error) {
 	return true, nil
 }
 
-func ExistSnap(snap string) (bool, error) {
-	return std.ExistSnap(snap)
+func ExistSnap(fs, snap string) (bool, error) {
+	return std.ExistSnap(fs, snap)
 }
 
-func (this *Zfs) ExistSnap(snap string) (bool, error) {
-	if _, err := this.ListSnap(snap, false); err != nil {
+func (this *Zfs) ExistSnap(fs, snap string) (bool, error) {
+	if _, err := this.ListSnap(fs+"@"+snap, false); err != nil {
 		if strings.Contains(err.Error(), DATANOE) {
 			return false, nil
 		}
