@@ -7,7 +7,7 @@ this package wraps runcmd package; i create it essentially for my zbackup progra
 
 so, I'll be glad if you find this package useful,
 
-but I think, that much better if you will use runcmd
+but I think, that much better if you will use runcmd for your cases
 
 all types and methods are self-explained:
 http://godoc.org/github.com/theairkit/runcmd
