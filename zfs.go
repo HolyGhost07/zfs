@@ -8,7 +8,11 @@ import (
 	"github.com/theairkit/runcmd"
 )
 
-var DATANOE = "dataset does not exist"
+var (
+	FS      = "filesystem"
+	SNAP    = "snapshot"
+	DATANOE = "dataset does not exist"
+)
 
 type Zfs struct {
 	runcmd.Runner
@@ -69,7 +73,7 @@ func ExistFs(fs string) (bool, error) {
 }
 
 func (this *Zfs) ExistFs(fs string) (bool, error) {
-	if _, err := this.ListFs(fs, false); err != nil {
+	if _, err := this.List(fs, FS, false); err != nil {
 		if strings.Contains(err.Error(), DATANOE) {
 			return false, nil
 		}
@@ -83,7 +87,7 @@ func ExistSnap(fs, snap string) (bool, error) {
 }
 
 func (this *Zfs) ExistSnap(fs, snap string) (bool, error) {
-	if _, err := this.ListSnap(fs+"@"+snap, false); err != nil {
+	if _, err := this.List(fs+"@"+snap, SNAP, false); err != nil {
 		if strings.Contains(err.Error(), DATANOE) {
 			return false, nil
 		}
@@ -92,16 +96,16 @@ func (this *Zfs) ExistSnap(fs, snap string) (bool, error) {
 	return true, nil
 }
 
-func ListFs(fs string, recursive bool) ([]string, error) {
-	return std.ListFs(fs, recursive)
+func List(fs, fsType string, recursive bool) ([]string, error) {
+	return std.List(fs, fsType, recursive)
 }
 
-func (this *Zfs) ListFs(fs string, recursive bool) ([]string, error) {
+func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 	r := ""
 	if recursive {
 		r = "-r"
 	}
-	cmd := "zfs list -Ho name -t filesystem " + r + " " + fs
+	cmd := "zfs list -Ho name -t " + fsType + " " + r + " " + fs
 	c, err := this.Command(cmd)
 	if err != nil {
 		return nil, err
@@ -109,16 +113,12 @@ func (this *Zfs) ListFs(fs string, recursive bool) ([]string, error) {
 	return c.Run()
 }
 
-func ListSnap(snap string, recursive bool) ([]string, error) {
-	return std.ListSnap(snap, recursive)
+func ListFsSnap(fs string) ([]string, error) {
+	return std.ListFsSnap(fs)
 }
 
-func (this *Zfs) ListSnap(snap string, recursive bool) ([]string, error) {
-	r := ""
-	if recursive {
-		r = "-r"
-	}
-	cmd := "zfs list -Ho name -t snapshot " + r + " " + snap
+func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
+	cmd := "zfs list -Ho name -d1 -t snapshot " + fs
 	c, err := this.Command(cmd)
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
 }
 
 func (this *Zfs) RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
-	c, err := this.Command("zfs recv -F " + fs + "@" + snap)
+	c, err := this.Command("zfs recv " + fs + "@" + snap)
 	if err != nil {
 		return nil, err
 	}
@@ -206,21 +206,21 @@ func (this *Zfs) RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
 	return c, nil
 }
 
-func SendSnap(fs, snapCurr, snapNew string, cw runcmd.CmdWorker) error {
-	return std.SendSnap(fs, snapCurr, snapNew, cw)
+func SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorker, error) {
+	return std.SendSnap(fs, snapOld, snapNew, cw)
 }
-func (this *Zfs) SendSnap(fs, snapCurr, snapNew string, cw runcmd.CmdWorker) error {
-	cmd := "zfs send -i " + fs + "@" + snapCurr + " " + fs + "@" + snapNew
+func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorker, error) {
+	cmd := "zfs send -i " + fs + "@" + snapOld + " " + fs + "@" + snapNew
 	if snapNew == "" {
-		cmd = "zfs send " + fs + "@" + snapCurr
+		cmd = "zfs send " + fs + "@" + snapOld
 	}
 	c, err := this.Command(cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := c.Start(); err != nil {
-		return err
+		return nil, err
 	}
 	_, err = io.Copy(cw.StdinPipe(), c.StdoutPipe())
-	return err
+	return c, err
 }
