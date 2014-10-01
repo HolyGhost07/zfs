@@ -8,7 +8,7 @@ https://github.com/theairkit/zbackup
 
 so, I'll be glad if you find this package useful,
 
-but I think, that much better if you will use runcmd for your cases:
+but much better if you will use runcmd for your cases:
 
 https://github.com/theairkit/runcmd
 
