@@ -101,6 +101,22 @@ func List(fs, fsType string, recursive bool) ([]string, error) {
 }
 
 func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
+	// List fs by mask: zroot/blah*
+	// Get all fs by recursive call List(), and return matches:
+	if strings.HasSuffix(fs, "*") {
+		list := make([]string, 0)
+		out, err := this.List("", FS, false)
+		if err != nil {
+			return nil, err
+		}
+		for _, next := range out {
+			if strings.Contains(next, strings.TrimRight(fs, "*")) {
+				list = append(list, next)
+			}
+		}
+		return list, nil
+	}
+
 	r := ""
 	if recursive {
 		r = "-r"
