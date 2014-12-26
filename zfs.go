@@ -40,6 +40,19 @@ func (this *Zfs) CreateSnap(fs, snap string) error {
 	return err
 }
 
+func CreateFs(fs string) error {
+	return std.CreateFs(fs)
+}
+
+func (this *Zfs) CreateFs(fs string) error {
+	c, err := this.Command("zfs create " + fs)
+	if err != nil {
+		return err
+	}
+	_, err = c.Run()
+	return err
+}
+
 func Destroy(fs string) error {
 	return std.Destroy(fs)
 }
