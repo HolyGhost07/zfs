@@ -243,13 +243,24 @@ func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (run
 	if snapNew == "" {
 		cmd = "zfs send " + fs + "@" + snapOld
 	}
-	c, err := this.Command(cmd)
+	sendWorker, err := this.Command(cmd)
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Start(); err != nil {
+
+	sendWorkerStdout, err := sendWorker.StdoutPipe()
+	if err != nil {
 		return nil, err
 	}
-	_, err = io.Copy(cw.StdinPipe(), c.StdoutPipe())
-	return c, err
+
+	cwStdin, err := cw.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := sendWorker.Start(); err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(cwStdin, sendWorkerStdout)
+	return sendWorker, err
 }
