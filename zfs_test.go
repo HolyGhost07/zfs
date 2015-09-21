@@ -27,30 +27,18 @@ func TestCreateSnap(t *testing.T) {
 	}
 
 	// Create valid snapshot:
-	if err := lRunner.CreateSnap(fs[0] + "@" + snap[0]); err != nil {
+	if err := lRunner.CreateSnap(fs[0], snap[0]); err != nil {
+		fmt.Println("test")
+		t.Error(err)
+	}
+
+	if err := lRunner.CreateSnap(fs[1], snap[1]); err != nil {
 		fmt.Println("test")
 		t.Error(err)
 	}
 
 	// Create invalid snapshot, error is normal:
-	if err := lRunner.CreateSnap(fs[0] + "blah" + "@" + snap[0]); err != nil {
-		fmt.Println(err.Error())
-	}
-}
-
-func TestDestroySnap(t *testing.T) {
-	lRunner, err := NewZfs(runcmd.NewLocalRunner())
-	if err != nil {
-		t.Error(err)
-	}
-
-	// Delete valid snapshot:
-	if err := lRunner.DestroySnap(fs[0] + "@" + snap[0]); err != nil {
-		t.Error(err)
-	}
-
-	// Delete invalid snapshot, error is normal:
-	if err := lRunner.DestroySnap(fs[0] + "blah" + "@" + snap[0]); err != nil {
+	if err := lRunner.CreateSnap(fs[0]+"blah", snap[0]); err != nil {
 		fmt.Println(err.Error())
 	}
 }
@@ -62,7 +50,7 @@ func TestExistSnap(t *testing.T) {
 	}
 
 	// Check exists valid snapshot:
-	exists, err := lRunner.ExistSnap(fs[0] + "@" + snap[0])
+	exists, err := lRunner.ExistSnap(fs[0], snap[0])
 	if err != nil {
 		t.Error(err)
 	}
@@ -73,7 +61,7 @@ func TestExistSnap(t *testing.T) {
 	}
 
 	// Checks exists invalid snapshot:
-	if err := lRunner.DestroySnap(fs[0] + "blah" + "@" + snap[0]); err != nil {
+	if err := lRunner.Destroy(fs[0] + "blah" + "@" + snap[0]); err != nil {
 		fmt.Println(err.Error())
 	}
 }
@@ -101,14 +89,14 @@ func TestProperty(t *testing.T) {
 	}
 }
 
-func TestListFs(t *testing.T) {
+func TestList(t *testing.T) {
 	lRunner, err := NewZfs(runcmd.NewLocalRunner())
 	if err != nil {
 		t.Error(err)
 	}
 
 	// List fs: non-recursive
-	list, err := lRunner.ListFs(fs[0], FS, false)
+	list, err := lRunner.List(fs[0], FS, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -119,7 +107,7 @@ func TestListFs(t *testing.T) {
 	fmt.Println(list[0])
 
 	// List fs: recursive
-	list, err = lRunner.ListFs(fs[0], FS, true)
+	list, err = lRunner.List(fs[0]+"*", FS, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,7 +120,7 @@ func TestListFs(t *testing.T) {
 	}
 
 	// List snap: non-recursive
-	list, err = lRunner.ListFs(fs[1]+"@"+snap[1], SNAP, false)
+	list, err = lRunner.List(fs[1]+"@"+snap[1], SNAP, false)
 	if err != nil {
 		t.Error(err)
 	}
@@ -140,10 +128,15 @@ func TestListFs(t *testing.T) {
 		fmt.Println(list)
 		t.Error(errors.New("error list snap non-recursive: more than one fs: "))
 	}
+
+	if list == nil {
+		t.Fatal(errors.New("error list snap should not be nil"))
+	}
+
 	fmt.Println(list[0])
 
 	// List snap: recursive
-	list, err = lRunner.ListFs(fs[0], SNAP, true)
+	list, err = lRunner.List(fs[0]+"*", SNAP, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -153,5 +146,28 @@ func TestListFs(t *testing.T) {
 	}
 	for _, fs := range list {
 		fmt.Println(fs)
+	}
+}
+
+// should be here because snapshot will be removed and other test cases will be
+// failed
+func TestDestroySnap(t *testing.T) {
+	lRunner, err := NewZfs(runcmd.NewLocalRunner())
+	if err != nil {
+		t.Error(err)
+	}
+
+	// Delete valid snapshot:
+	if err := lRunner.Destroy(fs[0] + "@" + snap[0]); err != nil {
+		t.Error(err)
+	}
+
+	if err := lRunner.Destroy(fs[1] + "@" + snap[1]); err != nil {
+		t.Error(err)
+	}
+
+	// Delete invalid snapshot, error is normal:
+	if err := lRunner.Destroy(fs[0] + "blah" + "@" + snap[0]); err != nil {
+		fmt.Println(err.Error())
 	}
 }
