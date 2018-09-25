@@ -28,12 +28,12 @@ func TestCreateSnap(t *testing.T) {
 
 	// Create valid snapshot:
 	if err := lRunner.CreateSnap(fs[0], snap[0]); err != nil {
-		fmt.Println("test")
+		fmt.Println("Cannot create snapshot " + fs[0] + "@" + snap[0])
 		t.Error(err)
 	}
 
 	if err := lRunner.CreateSnap(fs[1], snap[1]); err != nil {
-		fmt.Println("test")
+		fmt.Println("Cannot create snapshot " + fs[1] + "@" + snap[1])
 		t.Error(err)
 	}
 
@@ -55,9 +55,9 @@ func TestExistSnap(t *testing.T) {
 		t.Error(err)
 	}
 	if exists {
-		fmt.Println(fs[0] + "@" + snap[0] + " exists")
+		fmt.Println("Snapshot " + fs[0] + "@" + snap[0] + " exists")
 	} else {
-		fmt.Println(fs[0] + "@" + snap[0] + " does not exists")
+		fmt.Println("Snapshot " + fs[0] + "@" + snap[0] + " does not exists")
 	}
 
 	// Checks exists invalid snapshot:
@@ -102,6 +102,7 @@ func TestList(t *testing.T) {
 	}
 	if len(list) > 1 {
 		fmt.Println(list)
+		fmt.Println("error list fs non-recursive: more than one fs")
 		t.Error(errors.New("error list fs non-recursive: more than one fs: "))
 	}
 	fmt.Println(list[0])

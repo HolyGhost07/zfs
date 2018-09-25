@@ -33,7 +33,11 @@ func CreateSnap(fs, snap string) error {
 }
 
 func (this *Zfs) CreateSnap(fs, snap string) error {
-	c := this.Command("zfs snapshot " + fs + "@" + snap)
+	c := this.Command(
+		"zfs",
+		"snapshot",
+		fs+"@"+snap,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return err
@@ -47,7 +51,11 @@ func CreateFs(fs string) error {
 }
 
 func (this *Zfs) CreateFs(fs string) error {
-	c := this.Command("zfs create " + fs)
+	c := this.Command(
+		"zfs",
+		"create",
+		fs,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return err
@@ -61,7 +69,11 @@ func Destroy(fs string) error {
 }
 
 func (this *Zfs) Destroy(fs string) error {
-	c := this.Command("zfs destroy " + fs)
+	c := this.Command(
+		"zfs",
+		"destroy",
+		fs,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return err
@@ -76,7 +88,10 @@ func RenameSnap(fs, snapOld, snapNew string) error {
 
 func (this *Zfs) RenameSnap(fs, snapOld, snapNew string) error {
 	c := this.Command(
-		"zfs rename " + fs + "@" + snapOld + " " + fs + "@" + snapNew,
+		"zfs",
+		"rename",
+		fs+"@"+snapOld,
+		fs+"@"+snapNew,
 	)
 	err := c.CmdError()
 	if err != nil {
@@ -135,12 +150,31 @@ func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 		return list, nil
 	}
 
-	r := ""
-	if recursive {
-		r = "-r"
+	args := []string{
+		"list",
+		"-Ho",
+		"name",
+		"-t",
+		fsType,
+		fs,
 	}
-	cmd := "zfs list -Ho name -t " + fsType + " " + r + " " + fs
-	c := this.Command(cmd)
+	if recursive {
+		args = []string{
+			"list",
+			"-Ho",
+			"name",
+			"-t",
+			fsType,
+			"-r",
+			fs,
+		}
+	}
+	length := len(args)
+	if fs == "" {
+		args = args[:length-1]
+	}
+
+	c := this.Command("zfs", args...)
 	err := c.CmdError()
 	if err != nil {
 		return nil, err
@@ -148,11 +182,19 @@ func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 
 	var stdout bytes.Buffer
 	c.SetStdout(&stdout)
-	err := c.Run()
+	err = c.Run()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return strings.Split(stdout.String(), "\n"), nil
+
+	out := strings.Split(stdout.String(), "\n")
+	length = len(out)
+	if length > 1 {
+		if out[length-1] == "" {
+			out = out[:length-1]
+		}
+	}
+	return out, nil
 }
 
 func ListFsSnap(fs string) ([]string, error) {
@@ -160,8 +202,16 @@ func ListFsSnap(fs string) ([]string, error) {
 }
 
 func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
-	cmd := "zfs list -Ho name -d1 -t snapshot " + fs
-	c := this.Command(cmd)
+	c := this.Command(
+		"zfs",
+		"list",
+		"-Ho",
+		"name",
+		"-d1",
+		"-t",
+		"snapshot",
+		fs,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return nil, err
@@ -169,11 +219,19 @@ func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
 
 	var stdout bytes.Buffer
 	c.SetStdout(&stdout)
-	err := c.Run()
+	err = c.Run()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return strings.Split(stdout.String(), "\n"), nil
+
+	out := strings.Split(stdout.String(), "\n")
+	length := len(out)
+	if length > 1 {
+		if out[length-1] == "" {
+			out = out[:length-1]
+		}
+	}
+	return out, nil
 }
 
 func Property(fs, property string) (string, error) {
@@ -181,7 +239,14 @@ func Property(fs, property string) (string, error) {
 }
 
 func (this *Zfs) Property(fs, property string) (string, error) {
-	c := this.Command("zfs get -H -o value " + property + " " + fs)
+	c := this.Command(
+		"zfs",
+		"get",
+		"-Ho",
+		"value",
+		property,
+		fs,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return "", err
@@ -189,7 +254,7 @@ func (this *Zfs) Property(fs, property string) (string, error) {
 
 	var stdout bytes.Buffer
 	c.SetStdout(&stdout)
-	err := c.Run()
+	err = c.Run()
 	if err != nil {
 		return "", err
 	}
@@ -201,7 +266,12 @@ func SetProperty(fs, property, value string) error {
 }
 
 func (this *Zfs) SetProperty(fs, property, value string) error {
-	c := this.Command("zfs set " + property + "=" + value + " " + fs)
+	c := this.Command(
+		"zfs",
+		"set",
+		property+"="+value,
+		fs,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return err
@@ -224,7 +294,17 @@ func RecentSnap(snap, property string) (string, error) {
 }
 
 func (this *Zfs) RecentSnap(snap, property string) (string, error) {
-	c := this.Command("zfs list -Hro name -t snapshot -S creation " + snap)
+	c := this.Command(
+		"zfs",
+		"list",
+		"-Hro",
+		"name",
+		"-t",
+		"snapshot",
+		"-S",
+		"creation",
+		snap,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return "", err
@@ -232,7 +312,7 @@ func (this *Zfs) RecentSnap(snap, property string) (string, error) {
 
 	var stdout bytes.Buffer
 	c.SetStdout(&stdout)
-	err := c.Run()
+	err = c.Run()
 	if err != nil {
 		return "", err
 	}
@@ -258,7 +338,11 @@ func RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
 }
 
 func (this *Zfs) RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
-	c := this.Command("zfs recv " + fs + "@" + snap)
+	c := this.Command(
+		"zfs",
+		"recv",
+		fs+"@"+snap,
+	)
 	err := c.CmdError()
 	if err != nil {
 		return nil, err
@@ -271,11 +355,19 @@ func SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorke
 	return std.SendSnap(fs, snapOld, snapNew, cw)
 }
 func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorker, error) {
-	cmd := "zfs send -i " + fs + "@" + snapOld + " " + fs + "@" + snapNew
-	if snapNew == "" {
-		cmd = "zfs send " + fs + "@" + snapOld
+	args := []string{
+		"send",
+		"-i",
+		fs + "@" + snapOld,
+		fs + "@" + snapNew,
 	}
-	sendWorker := this.Command(cmd)
+	if snapNew == "" {
+		args = []string{
+			"send",
+			fs + "@" + snapOld,
+		}
+	}
+	sendWorker := this.Command("zfs", args...)
 	err := sendWorker.CmdError()
 	if err != nil {
 		return nil, err
