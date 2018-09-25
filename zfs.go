@@ -32,7 +32,8 @@ func CreateSnap(fs, snap string) error {
 }
 
 func (this *Zfs) CreateSnap(fs, snap string) error {
-	c, err := this.Command("zfs snapshot " + fs + "@" + snap)
+	c := this.Command("zfs snapshot " + fs + "@" + snap)
+	err := c.CmdError()
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,8 @@ func CreateFs(fs string) error {
 }
 
 func (this *Zfs) CreateFs(fs string) error {
-	c, err := this.Command("zfs create " + fs)
+	c := this.Command("zfs create " + fs)
+	err := c.CmdError()
 	if err != nil {
 		return err
 	}
@@ -58,7 +60,8 @@ func Destroy(fs string) error {
 }
 
 func (this *Zfs) Destroy(fs string) error {
-	c, err := this.Command("zfs destroy " + fs)
+	c := this.Command("zfs destroy " + fs)
+	err := c.CmdError()
 	if err != nil {
 		return err
 	}
@@ -71,9 +74,10 @@ func RenameSnap(fs, snapOld, snapNew string) error {
 }
 
 func (this *Zfs) RenameSnap(fs, snapOld, snapNew string) error {
-	c, err := this.Command(
+	c := this.Command(
 		"zfs rename " + fs + "@" + snapOld + " " + fs + "@" + snapNew,
 	)
+	err := c.CmdError()
 	if err != nil {
 		return err
 	}
@@ -135,7 +139,8 @@ func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 		r = "-r"
 	}
 	cmd := "zfs list -Ho name -t " + fsType + " " + r + " " + fs
-	c, err := this.Command(cmd)
+	c := this.Command(cmd)
+	err := c.CmdError()
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +153,8 @@ func ListFsSnap(fs string) ([]string, error) {
 
 func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
 	cmd := "zfs list -Ho name -d1 -t snapshot " + fs
-	c, err := this.Command(cmd)
+	c := this.Command(cmd)
+	err := c.CmdError()
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +166,8 @@ func Property(fs, property string) (string, error) {
 }
 
 func (this *Zfs) Property(fs, property string) (string, error) {
-	c, err := this.Command("zfs get -H -o value " + property + " " + fs)
+	c := this.Command("zfs get -H -o value " + property + " " + fs)
+	err := c.CmdError()
 	if err != nil {
 		return "", err
 	}
@@ -176,7 +183,8 @@ func SetProperty(fs, property, value string) error {
 }
 
 func (this *Zfs) SetProperty(fs, property, value string) error {
-	c, err := this.Command("zfs set " + property + "=" + value + " " + fs)
+	c := this.Command("zfs set " + property + "=" + value + " " + fs)
+	err := c.CmdError()
 	if err != nil {
 		return err
 	}
@@ -198,7 +206,8 @@ func RecentSnap(snap, property string) (string, error) {
 }
 
 func (this *Zfs) RecentSnap(snap, property string) (string, error) {
-	c, err := this.Command("zfs list -Hro name -t snapshot -S creation " + snap)
+	c := this.Command("zfs list -Hro name -t snapshot -S creation " + snap)
+	err := c.CmdError()
 	if err != nil {
 		return "", err
 	}
@@ -227,7 +236,8 @@ func RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
 }
 
 func (this *Zfs) RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
-	c, err := this.Command("zfs recv " + fs + "@" + snap)
+	c := this.Command("zfs recv " + fs + "@" + snap)
+	err := c.CmdError()
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +253,8 @@ func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (run
 	if snapNew == "" {
 		cmd = "zfs send " + fs + "@" + snapOld
 	}
-	sendWorker, err := this.Command(cmd)
+	sendWorker := this.Command(cmd)
+	err := sendWorker.CmdError()
 	if err != nil {
 		return nil, err
 	}
