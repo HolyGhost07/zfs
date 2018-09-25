@@ -1,6 +1,7 @@
 package zfs
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"strings"
@@ -37,7 +38,7 @@ func (this *Zfs) CreateSnap(fs, snap string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Run()
+	err = c.Run()
 	return err
 }
 
@@ -51,7 +52,7 @@ func (this *Zfs) CreateFs(fs string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Run()
+	err = c.Run()
 	return err
 }
 
@@ -65,7 +66,7 @@ func (this *Zfs) Destroy(fs string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Run()
+	err = c.Run()
 	return err
 }
 
@@ -81,7 +82,7 @@ func (this *Zfs) RenameSnap(fs, snapOld, snapNew string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.Run()
+	err = c.Run()
 	return err
 }
 
@@ -144,7 +145,14 @@ func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.Run()
+
+	var stdout bytes.Buffer
+	c.SetStdout(&stdout)
+	err := c.Run()
+	if err != nil {
+		return "", err
+	}
+	return strings.Split(stdout.String(), "\n"), nil
 }
 
 func ListFsSnap(fs string) ([]string, error) {
@@ -158,7 +166,14 @@ func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return c.Run()
+
+	var stdout bytes.Buffer
+	c.SetStdout(&stdout)
+	err := c.Run()
+	if err != nil {
+		return "", err
+	}
+	return strings.Split(stdout.String(), "\n"), nil
 }
 
 func Property(fs, property string) (string, error) {
@@ -171,11 +186,14 @@ func (this *Zfs) Property(fs, property string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	out, err := c.Run()
+
+	var stdout bytes.Buffer
+	c.SetStdout(&stdout)
+	err := c.Run()
 	if err != nil {
 		return "", err
 	}
-	return out[0], nil
+	return stdout.String(), nil
 }
 
 func SetProperty(fs, property, value string) error {
@@ -188,7 +206,7 @@ func (this *Zfs) SetProperty(fs, property, value string) error {
 	if err != nil {
 		return err
 	}
-	if _, err = c.Run(); err != nil {
+	if err = c.Run(); err != nil {
 		return err
 	}
 	out, err := this.Property(fs, property)
@@ -211,10 +229,14 @@ func (this *Zfs) RecentSnap(snap, property string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	out, err := c.Run()
+
+	var stdout bytes.Buffer
+	c.SetStdout(&stdout)
+	err := c.Run()
 	if err != nil {
 		return "", err
 	}
+	out := strings.Split(stdout.String(), "\n")
 	for _, snap := range out {
 		if property != "" {
 			out, err := this.Property(snap, property)
