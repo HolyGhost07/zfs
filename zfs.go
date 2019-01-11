@@ -1,7 +1,6 @@
 package zfs
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"strings"
@@ -42,7 +41,8 @@ func (this *Zfs) CreateSnap(fs, snap string) error {
 	if err != nil {
 		return err
 	}
-	err = c.Run()
+
+	_, _, err = c.Output()
 	return err
 }
 
@@ -60,7 +60,8 @@ func (this *Zfs) CreateFs(fs string) error {
 	if err != nil {
 		return err
 	}
-	err = c.Run()
+
+	_, _, err = c.Output()
 	return err
 }
 
@@ -78,7 +79,7 @@ func (this *Zfs) Destroy(fs string) error {
 	if err != nil {
 		return err
 	}
-	err = c.Run()
+	_, _, err = c.Output()
 	return err
 }
 
@@ -97,7 +98,7 @@ func (this *Zfs) RenameSnap(fs, snapOld, snapNew string) error {
 	if err != nil {
 		return err
 	}
-	err = c.Run()
+	_, _, err = c.Output()
 	return err
 }
 
@@ -180,14 +181,12 @@ func (this *Zfs) List(fs, fsType string, recursive bool) ([]string, error) {
 		return nil, err
 	}
 
-	var stdout bytes.Buffer
-	c.SetStdout(&stdout)
-	err = c.Run()
+	stdout, _, err := c.Output()
 	if err != nil {
 		return nil, err
 	}
 
-	out := strings.Split(stdout.String(), "\n")
+	out := strings.Split(string(stdout), "\n")
 	length = len(out)
 	if length > 1 {
 		if out[length-1] == "" {
@@ -217,14 +216,12 @@ func (this *Zfs) ListFsSnap(fs string) ([]string, error) {
 		return nil, err
 	}
 
-	var stdout bytes.Buffer
-	c.SetStdout(&stdout)
-	err = c.Run()
+	stdout, _, err := c.Output()
 	if err != nil {
 		return nil, err
 	}
 
-	out := strings.Split(stdout.String(), "\n")
+	out := strings.Split(string(stdout), "\n")
 	length := len(out)
 	if length > 1 {
 		if out[length-1] == "" {
@@ -252,13 +249,8 @@ func (this *Zfs) Property(fs, property string) (string, error) {
 		return "", err
 	}
 
-	var stdout bytes.Buffer
-	c.SetStdout(&stdout)
-	err = c.Run()
-	if err != nil {
-		return "", err
-	}
-	return stdout.String(), nil
+	stdout, _, err := c.Output()
+	return string(stdout), err
 }
 
 func SetProperty(fs, property, value string) error {
@@ -276,16 +268,21 @@ func (this *Zfs) SetProperty(fs, property, value string) error {
 	if err != nil {
 		return err
 	}
-	if err = c.Run(); err != nil {
+
+	_, _, err = c.Output()
+	if err != nil {
 		return err
 	}
+
 	out, err := this.Property(fs, property)
 	if err != nil {
 		return err
 	}
-	if out != value {
+
+	if strings.Trim(out, "\n") != value {
 		return errors.New("cannot set property: " + property)
 	}
+
 	return nil
 }
 
@@ -310,26 +307,29 @@ func (this *Zfs) RecentSnap(snap, property string) (string, error) {
 		return "", err
 	}
 
-	var stdout bytes.Buffer
-	c.SetStdout(&stdout)
-	err = c.Run()
+	stdout, _, err := c.Output()
 	if err != nil {
 		return "", err
 	}
-	out := strings.Split(stdout.String(), "\n")
+
+	out := strings.Split(string(stdout), "\n")
 	for _, snap := range out {
 		if property != "" {
 			out, err := this.Property(snap, property)
 			if err != nil {
 				return "", nil
 			}
+
 			if out == "true" {
 				return snap, nil
 			}
+
 			continue
 		}
+
 		return snap, nil
 	}
+
 	return "", nil
 }
 
@@ -344,17 +344,16 @@ func (this *Zfs) RecvSnap(fs, snap string) (runcmd.CmdWorker, error) {
 		fs+"@"+snap,
 	)
 	err := c.CmdError()
-	if err != nil {
-		return nil, err
-	}
-	err = c.Start()
-	return c, nil
+	return c, err
 }
 
-func SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorker, error) {
-	return std.SendSnap(fs, snapOld, snapNew, cw)
+func SendSnap(fs, snapOld, snapNew string, dstWorker runcmd.CmdWorker) error {
+	return std.SendSnap(fs, snapOld, snapNew, dstWorker)
 }
-func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (runcmd.CmdWorker, error) {
+
+func (this *Zfs) SendSnap(
+	fs, snapOld, snapNew string, dstWorker runcmd.CmdWorker,
+) error {
 	args := []string{
 		"send",
 		"-i",
@@ -367,25 +366,39 @@ func (this *Zfs) SendSnap(fs, snapOld, snapNew string, cw runcmd.CmdWorker) (run
 			fs + "@" + snapOld,
 		}
 	}
-	sendWorker := this.Command("zfs", args...)
-	err := sendWorker.CmdError()
+
+	srcWorker := this.Command("zfs", args...)
+	err := srcWorker.CmdError()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sendWorkerStdout, err := sendWorker.StdoutPipe()
+	srcWorkerStdout, err := srcWorker.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	cwStdin, err := cw.StdinPipe()
+	dstWorkerStdin, err := dstWorker.StdinPipe()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if err := sendWorker.Start(); err != nil {
-		return nil, err
+	if err := dstWorker.Start(); err != nil {
+		return err
 	}
-	_, err = io.Copy(cwStdin, sendWorkerStdout)
-	return sendWorker, err
+
+	if err := srcWorker.Start(); err != nil {
+		return err
+	}
+
+	_, err = io.Copy(dstWorkerStdin, srcWorkerStdout)
+
+	if err := srcWorker.Wait(); err != nil {
+		return err
+	}
+	if err := dstWorker.Wait(); err != nil {
+		return err
+	}
+
+	return err
 }
