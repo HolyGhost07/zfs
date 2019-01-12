@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/theairkit/runcmd"
+	"github.com/HolyGhost07/runcmd"
 )
 
 var (

@@ -4,21 +4,21 @@ golang zfs package helps you manage zfs filesystems/snaphots on local/remote hos
 
 this package wrap runcmd package; i create for zbackup:
 
-https://github.com/theairkit/zbackup
+https://github.com/HolyGhost07/zbackup
 
 so, fine if you find this package useful,
 
 but much better if you will use runcmd for your cases:
 
-https://github.com/theairkit/runcmd
+https://github.com/HolyGhost07/runcmd
 
 all types and methods are self-explained:
 
-http://godoc.org/github.com/theairkit/zfs
+http://godoc.org/github.com/HolyGhost07/zfs
 
 Installation:
 ```bash
-go get github.com/theairkit/zfs
+go get github.com/HolyGhost07/zfs
 ```
 
 ### Description and examples

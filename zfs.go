@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/theairkit/runcmd"
+	"github.com/HolyGhost07/runcmd"
 )
 
 var (
@@ -396,6 +396,7 @@ func (this *Zfs) SendSnap(
 	if err := srcWorker.Wait(); err != nil {
 		return err
 	}
+
 	if err := dstWorker.Wait(); err != nil {
 		return err
 	}
