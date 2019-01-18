@@ -250,7 +250,7 @@ func (this *Zfs) Property(fs, property string) (string, error) {
 	}
 
 	stdout, _, err := c.Output()
-	return string(stdout), err
+	return strings.Trim(string(stdout), "\n"), err
 }
 
 func SetProperty(fs, property, value string) error {
@@ -279,7 +279,7 @@ func (this *Zfs) SetProperty(fs, property, value string) error {
 		return err
 	}
 
-	if strings.Trim(out, "\n") != value {
+	if out != value {
 		return errors.New("cannot set property: " + property)
 	}
 
